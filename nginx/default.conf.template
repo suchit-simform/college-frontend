@@ -1,0 +1,24 @@
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Forwards /api to the backend so the default relative VITE_API_BASE_URL works
+    location /api/ {
+        proxy_pass ${API_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Hashed build assets never change, so they can be cached for good
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Client-side routes (/department, /student, /teacher) all serve the SPA
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
