@@ -1,25 +1,27 @@
-import { useMemo } from "react"
-import type { ColumnDef } from "@tanstack/react-table"
-import { teacherApi } from "@/api/teachers"
-import { useConfirm } from "@/components/confirm-dialog"
-import { CrudPage } from "@/components/crud-page"
-import { DataTable } from "@/components/data-table"
-import { DepartmentBadges } from "@/components/department-badges"
-import { RowActions } from "@/components/row-actions"
-import { useFormDialog } from "@/hooks/use-form-dialog"
-import { useListState } from "@/hooks/use-list-state"
-import type { Teacher } from "@/types"
-import { TeacherFormDialog } from "./teacher-form-dialog"
+import { teacherApi } from "@/api/teachers";
+import { useConfirm } from "@/components/confirm-dialog";
+import { CrudPage } from "@/components/crud-page";
+import { DataTable } from "@/components/data-table";
+import { DepartmentBadges } from "@/components/department-badges";
+import { RowActions } from "@/components/row-actions";
+import { useFormDialog } from "@/hooks/use-form-dialog";
+import { useListState } from "@/hooks/use-list-state";
+import { isDepartmentFeatureEnable } from "@/lib/utils";
+import type { Teacher } from "@/types";
+import type { ColumnDef, Row } from "@tanstack/react-table";
+import { useMemo } from "react";
+import { TeacherFormDialog } from "./teacher-form-dialog";
 
-const fullName = (t: Teacher) => `${t.user.firstName} ${t.user.lastName}`
+const fullName = (t: Teacher) => `${t.user.firstName} ${t.user.lastName}`;
 
 export function TeachersPage() {
-  const list = useListState()
-  const { data, isLoading, isError } = teacherApi.useList(list.params)
-  const { mutateAsync: remove } = teacherApi.useDelete()
-  const dialog = useFormDialog<Teacher>()
-  const { openEdit } = dialog
-  const confirm = useConfirm()
+  const list = useListState();
+  const { data, isLoading, isError } = teacherApi.useList(list.params);
+  const { mutateAsync: remove } = teacherApi.useDelete();
+  const dialog = useFormDialog<Teacher>();
+  const { openEdit } = dialog;
+  const confirm = useConfirm();
+  const shouldDisplayDepartmentFeature = isDepartmentFeatureEnable();
 
   const columns = useMemo<ColumnDef<Teacher>[]>(
     () => [
@@ -27,11 +29,17 @@ export function TeachersPage() {
       { id: "name", header: "Name", accessorFn: fullName },
       { accessorKey: "designation", header: "Designation" },
       { accessorKey: "expertise", header: "Expertise" },
-      {
-        id: "departments",
-        header: "Departments",
-        cell: ({ row }) => <DepartmentBadges departments={row.original.departments} />,
-      },
+      ...(shouldDisplayDepartmentFeature
+        ? [
+            {
+              id: "departments",
+              header: "Departments",
+              cell: ({ row }: { row: Row<Teacher> }) => (
+                <DepartmentBadges departments={row.original.departments} />
+              ),
+            },
+          ]
+        : []),
       {
         id: "actions",
         header: () => <span className="sr-only">Actions</span>,
@@ -51,7 +59,7 @@ export function TeachersPage() {
       },
     ],
     [openEdit, confirm, remove],
-  )
+  );
 
   return (
     <CrudPage
@@ -73,7 +81,12 @@ export function TeachersPage() {
         isLoading={isLoading}
         isError={isError}
       />
-      <TeacherFormDialog key={dialog.key} open={dialog.open} onOpenChange={dialog.setOpen} teacher={dialog.item} />
+      <TeacherFormDialog
+        key={dialog.key}
+        open={dialog.open}
+        onOpenChange={dialog.setOpen}
+        teacher={dialog.item}
+      />
     </CrudPage>
-  )
+  );
 }

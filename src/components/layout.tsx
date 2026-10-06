@@ -1,23 +1,25 @@
-import { useEffect } from "react"
-import { NavLink, Outlet } from "react-router"
-import { MoonIcon, SchoolIcon, SunIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { useThemeStore } from "@/store/theme"
+import { useEffect } from "react";
+import { NavLink, Outlet } from "react-router";
+import { MoonIcon, SchoolIcon, SunIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn, isDepartmentFeatureEnable } from "@/lib/utils";
+import { useThemeStore } from "@/store/theme";
 
 const navItems = [
   { to: "/", label: "Home" },
-  { to: "/department", label: "Departments" },
+  ...(isDepartmentFeatureEnable()
+    ? [{ to: "/department", label: "Departments" }]
+    : []),
   { to: "/student", label: "Student" },
   { to: "/teacher", label: "Teacher" },
-]
+];
 
 export function Layout() {
-  const { theme, toggleTheme } = useThemeStore()
+  const { theme, toggleTheme } = useThemeStore();
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark")
-  }, [theme])
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
 
   return (
     <div className="min-h-svh bg-background text-foreground">
@@ -27,7 +29,10 @@ export function Layout() {
             <SchoolIcon className="size-5" />
             <span className="hidden sm:inline">College</span>
           </NavLink>
-          <nav className="flex flex-1 items-center gap-1 overflow-x-auto" aria-label="Main">
+          <nav
+            className="flex flex-1 items-center gap-1 overflow-x-auto"
+            aria-label="Main"
+          >
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -44,7 +49,12 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+          >
             {theme === "dark" ? <SunIcon /> : <MoonIcon />}
           </Button>
         </div>
@@ -53,5 +63,5 @@ export function Layout() {
         <Outlet />
       </main>
     </div>
-  )
+  );
 }

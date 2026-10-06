@@ -1,36 +1,44 @@
-import { useMemo } from "react"
-import type { ColumnDef } from "@tanstack/react-table"
-import { studentApi } from "@/api/students"
-import { useConfirm } from "@/components/confirm-dialog"
-import { CrudPage } from "@/components/crud-page"
-import { DataTable } from "@/components/data-table"
-import { DepartmentBadges } from "@/components/department-badges"
-import { RowActions } from "@/components/row-actions"
-import { useFormDialog } from "@/hooks/use-form-dialog"
-import { useListState } from "@/hooks/use-list-state"
-import type { Student } from "@/types"
-import { StudentFormDialog } from "./student-form-dialog"
+import { studentApi } from "@/api/students";
+import { useConfirm } from "@/components/confirm-dialog";
+import { CrudPage } from "@/components/crud-page";
+import { DataTable } from "@/components/data-table";
+import { DepartmentBadges } from "@/components/department-badges";
+import { RowActions } from "@/components/row-actions";
+import { useFormDialog } from "@/hooks/use-form-dialog";
+import { useListState } from "@/hooks/use-list-state";
+import { isDepartmentFeatureEnable } from "@/lib/utils";
+import type { Student } from "@/types";
+import type { ColumnDef, Row } from "@tanstack/react-table";
+import { useMemo } from "react";
+import { StudentFormDialog } from "./student-form-dialog";
 
-const fullName = (s: Student) => `${s.user.firstName} ${s.user.lastName}`
+const fullName = (s: Student) => `${s.user.firstName} ${s.user.lastName}`;
 
 export function StudentsPage() {
-  const list = useListState()
-  const { data, isLoading, isError } = studentApi.useList(list.params)
-  const { mutateAsync: remove } = studentApi.useDelete()
-  const dialog = useFormDialog<Student>()
-  const { openEdit } = dialog
-  const confirm = useConfirm()
+  const list = useListState();
+  const { data, isLoading, isError } = studentApi.useList(list.params);
+  const { mutateAsync: remove } = studentApi.useDelete();
+  const dialog = useFormDialog<Student>();
+  const { openEdit } = dialog;
+  const confirm = useConfirm();
+  const shouldDisplayDepartmentFeature = isDepartmentFeatureEnable();
 
   const columns = useMemo<ColumnDef<Student>[]>(
     () => [
       { accessorKey: "id", header: "ID" },
       { id: "name", header: "Name", accessorFn: fullName },
       { accessorKey: "enrollmentNumber", header: "Enrollment no." },
-      {
-        id: "departments",
-        header: "Departments",
-        cell: ({ row }) => <DepartmentBadges departments={row.original.departments} />,
-      },
+      ...(shouldDisplayDepartmentFeature
+        ? [
+            {
+              id: "departments",
+              header: "Departments",
+              cell: ({ row }: { row: Row<Student> }) => (
+                <DepartmentBadges departments={row.original.departments} />
+              ),
+            },
+          ]
+        : []),
       {
         id: "actions",
         header: () => <span className="sr-only">Actions</span>,
@@ -50,7 +58,7 @@ export function StudentsPage() {
       },
     ],
     [openEdit, confirm, remove],
-  )
+  );
 
   return (
     <CrudPage
@@ -72,7 +80,12 @@ export function StudentsPage() {
         isLoading={isLoading}
         isError={isError}
       />
-      <StudentFormDialog key={dialog.key} open={dialog.open} onOpenChange={dialog.setOpen} student={dialog.item} />
+      <StudentFormDialog
+        key={dialog.key}
+        open={dialog.open}
+        onOpenChange={dialog.setOpen}
+        student={dialog.item}
+      />
     </CrudPage>
-  )
+  );
 }
